@@ -1,0 +1,23 @@
+# Emscripten SDK
+emsdk/
+
+# Chocolate Doom source (optional if you don't want to include it)
+chocolate-doom/
+
+# Build folders
+build/
+build-*/
+**/build/
+
+# Node
+node_modules/
+
+# Temporary files
+*.o
+*.a
+*.so
+*.log
+
+# Emscripten outputs (optional if you only want final files)
+*.map
+*.ts
