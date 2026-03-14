@@ -1,16 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-
 <meta charset="utf-8">
-
-<meta name="viewport"
-content="width=device-width,initial-scale=1,user-scalable=no">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>DOOM</title>
 
 <style>
-
 html,body{
 margin:0;
 padding:0;
@@ -29,35 +24,32 @@ max-width:100vw;
 max-height:100vh;
 }
 
-/* toggle */
-
+/* Toggle */
 #toggleControls{
 position:fixed;
 top:10px;
 right:10px;
 z-index:20;
-background:rgba(0,0,0,.6);
+background:rgba(0,0,0,.7);
 color:white;
 border:none;
 padding:8px 12px;
 border-radius:8px;
 }
 
-/* controls */
-
-#mobileControls{
+/* Controls */
+#controls{
 position:fixed;
 bottom:20px;
 left:0;
 right:0;
 display:flex;
 justify-content:space-between;
-pointer-events:none;
 z-index:10;
+pointer-events:none;
 }
 
-/* joystick */
-
+/* Joystick */
 #joystick{
 width:120px;
 height:120px;
@@ -78,9 +70,8 @@ left:35px;
 top:35px;
 }
 
-/* buttons */
-
-.actionButtons{
+/* Buttons */
+.buttons{
 display:flex;
 flex-direction:column;
 gap:10px;
@@ -88,16 +79,16 @@ margin-right:20px;
 pointer-events:auto;
 }
 
-.ctrlBtn{
+.btn{
 width:60px;
 height:60px;
 font-size:18px;
-background:rgba(0,0,0,.6);
+background:rgba(0,0,0,.7);
 color:white;
 border:none;
 border-radius:10px;
 }
-
+.hidden{display:none;}
 </style>
 </head>
 
@@ -108,179 +99,148 @@ border-radius:10px;
 <button id="toggleControls">Hide Controls</button>
 
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init()</script>
+<script>eruda.init();</script>
 
 <script>
-
+/* Emscripten Module */
 var Module = {
 canvas: document.getElementById("canvas"),
-print: text => console.log(text),
-printErr: text => console.error(text)
-}
-
+print: console.log,
+printErr: console.error
+};
 </script>
 
 <script src="chocolate-doom.js"></script>
 
+<div id="controls">
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
 
-<div id="mobileControls">
-
-<div id="joystick">
-<div id="stick"></div>
+  <div class="buttons">
+    <button class="btn" data-key="32">🔥</button>
+    <button class="btn" data-key="13">USE</button>
+  </div>
 </div>
-
-<div class="actionButtons">
-
-<button class="ctrlBtn" data-key="32">🔥</button>
-<button class="ctrlBtn" data-key="13">USE</button>
-
-</div>
-
-</div>
-
 
 <script>
 
-/* keyboard emulator */
+/* IMPORTANT: Focus canvas */
+Module.canvas.setAttribute("tabindex","0");
+Module.canvas.focus();
 
+/* Send keyboard to canvas */
 function sendKey(code,type){
-
-const event=new KeyboardEvent(type,{
-keyCode:code,
-which:code,
-bubbles:true
-})
-
-document.dispatchEvent(event)
-
+  const event = new KeyboardEvent(type,{
+    keyCode:code,
+    which:code,
+    bubbles:true
+  });
+  Module.canvas.dispatchEvent(event);
 }
 
-/* action buttons */
+/* Action buttons */
+document.querySelectorAll(".btn").forEach(btn=>{
+  const code=parseInt(btn.dataset.key);
 
-document.querySelectorAll(".ctrlBtn").forEach(btn=>{
+  btn.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    sendKey(code,"keydown");
+  });
 
-const code=parseInt(btn.dataset.key)
+  btn.addEventListener("touchend",e=>{
+    e.preventDefault();
+    sendKey(code,"keyup");
+  });
+});
 
-btn.addEventListener("touchstart",e=>{
-e.preventDefault()
-sendKey(code,"keydown")
-})
+/* Auto hide on desktop */
+const controls=document.getElementById("controls");
+const toggle=document.getElementById("toggleControls");
 
-btn.addEventListener("touchend",e=>{
-e.preventDefault()
-sendKey(code,"keyup")
-})
-
-})
-
-/* device detection */
-
-const controls=document.getElementById("mobileControls")
-const toggle=document.getElementById("toggleControls")
-
-if(!("ontouchstart" in window)){
-controls.style.display="none"
-toggle.textContent="Show Controls"
+function isTouch(){
+  return ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 }
 
+if(!isTouch()){
+  controls.classList.add("hidden");
+  toggle.textContent="Show Controls";
+}
+
+/* Toggle button */
 toggle.onclick=()=>{
+  controls.classList.toggle("hidden");
+  toggle.textContent=
+    controls.classList.contains("hidden")
+    ? "Show Controls"
+    : "Hide Controls";
+};
 
-if(controls.style.display==="none"){
-controls.style.display="flex"
-toggle.textContent="Hide Controls"
-}else{
-controls.style.display="none"
-toggle.textContent="Show Controls"
-}
+/* JOYSTICK MOVEMENT */
+const joystick=document.getElementById("joystick");
+const stick=document.getElementById("stick");
 
-}
+let active=false;
 
-/* joystick */
-
-const joystick=document.getElementById("joystick")
-const stick=document.getElementById("stick")
-
-let active=false
-
-joystick.addEventListener("touchstart",()=>active=true)
+joystick.addEventListener("touchstart",()=>active=true);
 
 joystick.addEventListener("touchend",()=>{
+  active=false;
+  stick.style.left="35px";
+  stick.style.top="35px";
 
-active=false
-
-stick.style.left="35px"
-stick.style.top="35px"
-
-sendKey(38,"keyup")
-sendKey(40,"keyup")
-sendKey(37,"keyup")
-sendKey(39,"keyup")
-
-})
+  sendKey(37,"keyup");
+  sendKey(38,"keyup");
+  sendKey(39,"keyup");
+  sendKey(40,"keyup");
+});
 
 joystick.addEventListener("touchmove",(e)=>{
+  if(!active)return;
 
-if(!active)return
+  const rect=joystick.getBoundingClientRect();
+  const x=e.touches[0].clientX-rect.left;
+  const y=e.touches[0].clientY-rect.top;
 
-const rect=joystick.getBoundingClientRect()
+  const dx=x-60;
+  const dy=y-60;
 
-const x=e.touches[0].clientX-rect.left
-const y=e.touches[0].clientY-rect.top
+  const max=40;
+  const clampedX=Math.max(-max,Math.min(max,dx));
+  const clampedY=Math.max(-max,Math.min(max,dy));
 
-const dx=x-60
-const dy=y-60
+  stick.style.left=(60+clampedX-25)+"px";
+  stick.style.top=(60+clampedY-25)+"px";
 
-stick.style.left=(60+dx/2-25)+"px"
-stick.style.top=(60+dy/2-25)+"px"
+  /* Movement keys */
+  sendKey(38, dy<-20 ? "keydown":"keyup");
+  sendKey(40, dy>20 ? "keydown":"keyup");
+  sendKey(37, dx<-20 ? "keydown":"keyup");
+  sendKey(39, dx>20 ? "keydown":"keyup");
+});
 
-/* move */
-
-if(dy<-20) sendKey(38,"keydown")
-else sendKey(38,"keyup")
-
-if(dy>20) sendKey(40,"keydown")
-else sendKey(40,"keyup")
-
-if(dx<-20) sendKey(37,"keydown")
-else sendKey(37,"keyup")
-
-if(dx>20) sendKey(39,"keydown")
-else sendKey(39,"keyup")
-
-})
-
-/* swipe turning */
-
-let lastX=null
+/* SWIPE TO TURN */
+let lastX=null;
 
 document.addEventListener("touchmove",(e)=>{
+  const x=e.touches[0].clientX;
 
-const x=e.touches[0].clientX
+  if(lastX===null){
+    lastX=x;
+    return;
+  }
 
-if(lastX===null){
-lastX=x
-return
-}
+  const diff=x-lastX;
 
-const diff=x-lastX
+  if(Math.abs(diff)>10){
+    sendKey(diff>0?39:37,"keydown");
+    setTimeout(()=>sendKey(diff>0?39:37,"keyup"),40);
+  }
 
-if(Math.abs(diff)>10){
+  lastX=x;
+});
 
-if(diff>0){
-sendKey(39,"keydown")
-setTimeout(()=>sendKey(39,"keyup"),40)
-}else{
-sendKey(37,"keydown")
-setTimeout(()=>sendKey(37,"keyup"),40)
-}
-
-}
-
-lastX=x
-
-})
-
-document.addEventListener("touchend",()=>lastX=null)
+document.addEventListener("touchend",()=>lastX=null);
 
 </script>
 
