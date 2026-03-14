@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+
 <meta charset="utf-8">
 
 <meta name="viewport"
@@ -28,22 +29,21 @@ max-width:100vw;
 max-height:100vh;
 }
 
-/* TOGGLE BUTTON */
+/* toggle */
 
 #toggleControls{
 position:fixed;
 top:10px;
 right:10px;
 z-index:20;
-background:rgba(0,0,0,0.6);
+background:rgba(0,0,0,.6);
 color:white;
 border:none;
 padding:8px 12px;
 border-radius:8px;
-font-size:14px;
 }
 
-/* CONTROLS */
+/* controls */
 
 #mobileControls{
 position:fixed;
@@ -56,13 +56,13 @@ pointer-events:none;
 z-index:10;
 }
 
-/* JOYSTICK */
+/* joystick */
 
 #joystick{
 width:120px;
 height:120px;
 margin-left:20px;
-background:rgba(255,255,255,0.08);
+background:rgba(255,255,255,.08);
 border-radius:50%;
 position:relative;
 pointer-events:auto;
@@ -71,14 +71,14 @@ pointer-events:auto;
 #stick{
 width:50px;
 height:50px;
-background:rgba(255,255,255,0.5);
+background:rgba(255,255,255,.5);
 border-radius:50%;
 position:absolute;
 left:35px;
 top:35px;
 }
 
-/* ACTION BUTTONS */
+/* buttons */
 
 .actionButtons{
 display:flex;
@@ -89,21 +89,13 @@ pointer-events:auto;
 }
 
 .ctrlBtn{
-background:rgba(0,0,0,0.6);
+width:60px;
+height:60px;
+font-size:18px;
+background:rgba(0,0,0,.6);
 color:white;
 border:none;
 border-radius:10px;
-font-size:18px;
-width:60px;
-height:60px;
-}
-
-.ctrlBtn:active{
-background:rgba(255,255,255,0.3);
-}
-
-.hidden{
-display:none;
 }
 
 </style>
@@ -116,23 +108,15 @@ display:none;
 <button id="toggleControls">Hide Controls</button>
 
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
+<script>eruda.init()</script>
 
 <script>
 
 var Module = {
-
 canvas: document.getElementById("canvas"),
-
-print: function(text){
-console.log(text);
-},
-
-printErr: function(text){
-console.error(text);
+print: text => console.log(text),
+printErr: text => console.error(text)
 }
-
-};
 
 </script>
 
@@ -146,8 +130,10 @@ console.error(text);
 </div>
 
 <div class="actionButtons">
-<button class="ctrlBtn" data-key=" ">🔥</button>
-<button class="ctrlBtn" data-key="e">USE</button>
+
+<button class="ctrlBtn" data-key="32">🔥</button>
+<button class="ctrlBtn" data-key="13">USE</button>
+
 </div>
 
 </div>
@@ -155,12 +141,13 @@ console.error(text);
 
 <script>
 
-/* KEY EMULATION */
+/* keyboard emulator */
 
-function sendKey(key,type){
+function sendKey(code,type){
 
-const event = new KeyboardEvent(type,{
-key:key,
+const event=new KeyboardEvent(type,{
+keyCode:code,
+which:code,
 bubbles:true
 })
 
@@ -168,75 +155,54 @@ document.dispatchEvent(event)
 
 }
 
-/* ACTION BUTTONS */
+/* action buttons */
 
 document.querySelectorAll(".ctrlBtn").forEach(btn=>{
 
-const key = btn.dataset.key
+const code=parseInt(btn.dataset.key)
 
 btn.addEventListener("touchstart",e=>{
 e.preventDefault()
-sendKey(key,"keydown")
+sendKey(code,"keydown")
 })
 
 btn.addEventListener("touchend",e=>{
 e.preventDefault()
-sendKey(key,"keyup")
+sendKey(code,"keyup")
 })
 
 })
 
-/* DEVICE DETECTION */
+/* device detection */
 
 const controls=document.getElementById("mobileControls")
 const toggle=document.getElementById("toggleControls")
 
-function isTouch(){
-
-return (
-'ontouchstart' in window ||
-navigator.maxTouchPoints>0
-)
-
-}
-
-if(!isTouch()){
-
+if(!("ontouchstart" in window)){
 controls.style.display="none"
 toggle.textContent="Show Controls"
-
 }
-
-/* TOGGLE */
 
 toggle.onclick=()=>{
 
 if(controls.style.display==="none"){
-
 controls.style.display="flex"
 toggle.textContent="Hide Controls"
-
 }else{
-
 controls.style.display="none"
 toggle.textContent="Show Controls"
-
 }
 
 }
 
-/* JOYSTICK MOVEMENT */
+/* joystick */
 
 const joystick=document.getElementById("joystick")
 const stick=document.getElementById("stick")
 
 let active=false
 
-joystick.addEventListener("touchstart",()=>{
-
-active=true
-
-})
+joystick.addEventListener("touchstart",()=>active=true)
 
 joystick.addEventListener("touchend",()=>{
 
@@ -245,10 +211,10 @@ active=false
 stick.style.left="35px"
 stick.style.top="35px"
 
-sendKey("ArrowUp","keyup")
-sendKey("ArrowDown","keyup")
-sendKey("ArrowLeft","keyup")
-sendKey("ArrowRight","keyup")
+sendKey(38,"keyup")
+sendKey(40,"keyup")
+sendKey(37,"keyup")
+sendKey(39,"keyup")
 
 })
 
@@ -264,61 +230,26 @@ const y=e.touches[0].clientY-rect.top
 const dx=x-60
 const dy=y-60
 
-const distance=Math.sqrt(dx*dx+dy*dy)
+stick.style.left=(60+dx/2-25)+"px"
+stick.style.top=(60+dy/2-25)+"px"
 
-const max=40
+/* move */
 
-const clampedX=Math.max(-max,Math.min(max,dx))
-const clampedY=Math.max(-max,Math.min(max,dy))
+if(dy<-20) sendKey(38,"keydown")
+else sendKey(38,"keyup")
 
-stick.style.left=(60+clampedX-25)+"px"
-stick.style.top=(60+clampedY-25)+"px"
+if(dy>20) sendKey(40,"keydown")
+else sendKey(40,"keyup")
 
-/* MOVEMENT */
+if(dx<-20) sendKey(37,"keydown")
+else sendKey(37,"keyup")
 
-if(dy<-20){
-
-sendKey("ArrowUp","keydown")
-
-}else{
-
-sendKey("ArrowUp","keyup")
-
-}
-
-if(dy>20){
-
-sendKey("ArrowDown","keydown")
-
-}else{
-
-sendKey("ArrowDown","keyup")
-
-}
-
-if(dx<-20){
-
-sendKey("ArrowLeft","keydown")
-
-}else{
-
-sendKey("ArrowLeft","keyup")
-
-}
-
-if(dx>20){
-
-sendKey("ArrowRight","keydown")
-
-}else{
-
-sendKey("ArrowRight","keyup")
-
-}
+if(dx>20) sendKey(39,"keydown")
+else sendKey(39,"keyup")
 
 })
 
-/* SWIPE TO TURN */
+/* swipe turning */
 
 let lastX=null
 
@@ -327,28 +258,20 @@ document.addEventListener("touchmove",(e)=>{
 const x=e.touches[0].clientX
 
 if(lastX===null){
-
 lastX=x
 return
-
 }
 
 const diff=x-lastX
 
-if(Math.abs(diff)>8){
+if(Math.abs(diff)>10){
 
 if(diff>0){
-
-sendKey("ArrowRight","keydown")
-
-setTimeout(()=>sendKey("ArrowRight","keyup"),30)
-
+sendKey(39,"keydown")
+setTimeout(()=>sendKey(39,"keyup"),40)
 }else{
-
-sendKey("ArrowLeft","keydown")
-
-setTimeout(()=>sendKey("ArrowLeft","keyup"),30)
-
+sendKey(37,"keydown")
+setTimeout(()=>sendKey(37,"keyup"),40)
 }
 
 }
@@ -357,11 +280,7 @@ lastX=x
 
 })
 
-document.addEventListener("touchend",()=>{
-
-lastX=null
-
-})
+document.addEventListener("touchend",()=>lastX=null)
 
 </script>
 
