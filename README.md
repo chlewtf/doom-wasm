@@ -6,7 +6,7 @@ Browser-based build of **Chocolate Doom** using WebAssembly.
 
 Place these files in the same folder:
 
-- `chocolate-doom.html`
+- `index.html`
 - `chocolate-doom.js`
 - `chocolate-doom.wasm`
 - `chocolate-doom.data`
